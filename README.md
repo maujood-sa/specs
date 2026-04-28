@@ -1,6 +1,6 @@
 # Maujood Future Work Spec Pack
 
-Status: draft for owner review, no implementation included.
+Status: living spec pack for owner review. Some low-risk foundation items were implemented after the first draft; see the implementation reports below.
 
 This folder contains product and engineering specifications for the future items requested after the codebase handoff. The goal is to make each item concrete enough to review, prioritize, estimate, and then implement safely.
 
@@ -14,6 +14,21 @@ This folder contains product and engineering specifications for the future items
 - Notifications: backend can send direct FCM notifications to a single stored `User.DeviceToken`, but there is no notification outbox, template system, delivery log, or notification history API.
 - Providers: backend stores provider products, availability windows, and polygon service areas. There is no provider-facing API contract yet.
 - Promotions/packages/Salla/WhatsApp/marketing pixels: not currently modeled as first-class backend concepts.
+
+## Implementation Reports
+
+- [2026-04-28 Overnight Build Report](./reports/2026-04-28-overnight-build-report.md)
+
+## Implemented Foundation Since First Draft
+
+- Backend Moyasar webhook inbox and duplicate webhook guard.
+- Backend payment failure/refund handling improvements.
+- Backend synchronous CSV order export endpoint.
+- Backend Firebase auth diagnostics with masked phone logging.
+- Backend Firebase push notification send guards.
+- App payment guard for missing Moyasar publishable key.
+- App iOS Firebase phone-auth compatibility shim.
+- App/backend build-tooling documentation updates.
 
 ## Shared Architecture Recommendation
 
@@ -56,9 +71,9 @@ For each spec, review these sections first:
 
 Recommended order after review:
 
-1. Fix observability and idempotency foundations: OTP diagnostics, webhook inbox, payment idempotency, order events, notification outbox.
+1. Finish observability and idempotency foundations: client OTP diagnostics, order events, notification outbox. Webhook inbox/payment idempotency and backend auth diagnostics are now partially implemented.
 2. Add customer and operations notifications on top of the order-event foundation.
-3. Add order export, because it is low product risk and helps operations immediately.
+3. Expand order export with filters/audit/async jobs. A first synchronous CSV backend endpoint is now implemented.
 4. Add Salla integration only after deciding the website source-of-truth model.
 5. Add promocodes, then packages, after pricing fields are normalized.
 6. Add provider integrations and live notifications after order progress states are explicit.
