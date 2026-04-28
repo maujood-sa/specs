@@ -1,6 +1,6 @@
 # 03 - Booking Flow Customer Notifications Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, foundation partially implemented.
 
 ## Problem
 
@@ -13,7 +13,24 @@ Customers need automatic notifications throughout the booking flow and during/af
 - Backend sends FCM through `FirebaseAuthService.SendOrderAcceptedNotification`.
 - Webhook sends generic "Order Accepted!" or "Payment Failed!" notifications.
 - `ChangeOrderStatus` sends generic status update notification.
+- Firebase push sends are now guarded so missing/invalid device tokens are logged instead of breaking order/webhook processing.
+- Moyasar webhook duplicate handling now reduces duplicate payment-side effects, but there is still no notification outbox or notification-level idempotency key.
 - App notifications screen currently renders hardcoded sample offer items after a delay.
+
+## Implementation Status - 2026-04-28
+
+Implemented:
+
+- Backend Firebase notification sends now catch Firebase messaging errors and log failures.
+- Order status changes skip push notification when the user has no device token instead of throwing.
+- Payment webhook duplicate guards reduce duplicate payment transaction creation.
+
+Still pending:
+
+- Notification templates, notification history, dispatch log, retry queue, and token cleanup.
+- Multi-device device-token table.
+- Localized customer notification content.
+- In-app notification API and app screen integration.
 
 ## Goals
 
@@ -206,4 +223,3 @@ Use notification title/body for display, and data payload for navigation.
 - Firebase Cloud Messaging: https://firebase.google.com/docs/cloud-messaging
 - FCM Admin SDK send: https://firebase.google.com/docs/cloud-messaging/send/admin-sdk
 - FCM token management: https://firebase.google.com/docs/cloud-messaging/manage-tokens
-

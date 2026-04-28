@@ -1,6 +1,6 @@
 # 11 - Moyasar Account Update Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, prerequisite hardening partially implemented.
 
 ## Problem
 
@@ -12,8 +12,32 @@ Maujood wants to update the Moyasar account. The app and backend currently depen
 - App sends payment metadata `order_id`.
 - Backend validates Moyasar webhook `secret_token` against `MoyaserSecretKey`/`MoyasarSecretKey` config naming.
 - Current webhook endpoint documented/used is `/api/v1/Webhook/webhook4`.
-- Webhook code expects event names matching Moyasar docs, including `payment_paid` and `payment_faild`.
-- Current failure path in code should be reviewed because failed payment path records success status in existing source.
+- Webhook code expects event names matching Moyasar docs, including `payment_paid`, `payment_faild`, `payment_failed`, and `payment_refunded`.
+- Failed payment mapping was corrected to create a failed purchase transaction instead of a success transaction.
+- Backend now stores incoming Moyasar webhook payloads in `WebhookInboxes` and skips duplicate event IDs.
+- Backend now avoids duplicate order transaction creation for the same order/payment/transaction type.
+- App payment screens now stop with a user-facing error if `MOYASAR_API_KEY` remote config is blank.
+
+## Implementation Status - 2026-04-28
+
+Implemented:
+
+- `WebhookInbox` table/model/context/migration for received Moyasar webhook tracking.
+- Duplicate webhook guard by Moyasar event ID.
+- Duplicate order transaction guard by order, payment reference, and transaction type.
+- Failed payment status mapping fix.
+- Refund transaction creation for `payment_refunded`.
+- Unauthorized webhook attempts are persisted as `unauthorized`.
+- Missing app publishable key guard before starting card/STC/Apple Pay flows.
+
+Still pending before Moyasar account cutover:
+
+- Deploy the `20260428023000_AddWebhookInbox` backend migration.
+- Standardize config naming: `MoyasarSecretKey` vs `MoyaserSecretKey`.
+- Add payment account/environment labels to logs.
+- Verify Apple Pay merchant ID/certificate/dashboard settings on a physical iOS device.
+- Run staging card, STC Pay, Apple Pay, failed-payment, duplicate-webhook, and refund tests.
+- Decide old-account reconciliation window and cutover time.
 
 ## Goals
 
@@ -77,9 +101,9 @@ App:
 
 Phase 1 - Preparation:
 
-- Add idempotency to webhook payment transaction creation.
-- Add webhook inbox logs.
-- Fix payment failure status mapping.
+- Add idempotency to webhook payment transaction creation. Status: implemented for order/payment/type duplicates.
+- Add webhook inbox logs. Status: implemented for Moyasar webhook receipt/status.
+- Fix payment failure status mapping. Status: implemented.
 - Add payment account/environment labels to logs.
 
 Phase 2 - Staging:
@@ -111,7 +135,7 @@ Before cutover, ensure:
 - Payment ID is unique in `OrderTransaction` or `PaymentEvent`.
 - Duplicate webhook for same payment does not create duplicate transaction.
 - Failed payment creates failed status, not success.
-- Refund/void events are handled or stored for manual review.
+- Refund events are handled as refund transactions; void events still need explicit handling or manual-review storage.
 - Unknown event type is stored and acknowledged or rejected based on policy.
 
 ## Monitoring Requirements
@@ -155,4 +179,3 @@ Track:
 - Moyasar webhooks: https://docs.moyasar.com/guides/dashboard/setting-up-webhooks/
 - Moyasar create payment: https://docs.moyasar.com/api/payments/01-create-payment/
 - Moyasar Apple Pay iOS: https://docs.moyasar.com/sdk/ios/apple-pay-payments-integration/
-

@@ -1,6 +1,6 @@
 # 01 - OTP Reliability Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, partially implemented.
 
 ## Problem
 
@@ -15,14 +15,31 @@ Because Firebase Phone Auth is client-side, the backend cannot currently see the
 - On code sent or automatic verification, the app navigates to verification screen.
 - On OTP entry, app signs in to Firebase and sends the Firebase ID token to backend `/User/authenticate`.
 - Backend verifies the Firebase token with Firebase Admin SDK and creates or returns a Maujood user.
-- iOS App Store build works today, but the current source compatibility shim does not yet implement iOS phone verification.
+- iOS App Store build works today. Source-built iOS now has a Firebase phone-auth compatibility shim using `FIRPhoneAuthProvider`.
+- Backend `/User/authenticate` now logs Firebase token verification success/failure with masked phone number and Firebase UID.
 
 Relevant current code:
 
 - `maujood-app-main/appShared/src/commonMain/kotlin/com/maujood/app/presentation/auth/login/LoginViewModel.kt`
 - `maujood-app-main/appShared/src/commonMain/kotlin/com/maujood/app/presentation/auth/verification/VerificationViewModel.kt`
 - `maujood-app-main/coreCompat/src/androidMain/kotlin/com/metacto/strapikmm/repos/PhoneAuthClient.android.kt`
+- `maujood-app-main/coreCompat/src/iosMain/kotlin/com/metacto/strapikmm/repos/PhoneAuthClient.ios.kt`
 - `maujood-backend-main/Services/Maujod/Implementation/UserService.cs`
+
+## Implementation Status - 2026-04-28
+
+Implemented:
+
+- iOS source phone-auth shim now sends verification through Firebase iOS SDK and exchanges OTP for a Firebase ID token.
+- Backend auth path now logs Firebase verification failures and successful user creation/login using masked phone values.
+- Android debug build, iOS shared compile, and iOS framework link were verified after the iOS auth shim change.
+
+Still pending:
+
+- Client analytics events for OTP send/code-sent/resend/verify outcomes.
+- A backend support report for recent auth attempts.
+- Firebase Console verification: Saudi region policy, billing/quota, Android SHA-1/SHA-256, APNs, API key restrictions, and Play Integrity.
+- User-facing error copy by Firebase exception type.
 
 ## Goals
 
@@ -79,7 +96,7 @@ Event fields:
 - current auth locale
 - whether Play Store install/source is available on Android
 
-Add backend auth diagnostics:
+Backend auth diagnostics:
 
 - Log `/User/authenticate` success/failure with Firebase UID, masked phone, app version, and request correlation ID.
 - Add a support-only endpoint/report for recent auth attempts by masked phone, without exposing secrets or raw tokens.
@@ -161,4 +178,3 @@ Phase 3:
 
 - Firebase Android phone auth: https://firebase.google.com/docs/auth/android/phone-auth
 - Firebase Auth limits: https://firebase.google.com/docs/auth/limits
-

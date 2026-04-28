@@ -1,6 +1,6 @@
 # 12 - Operations New Order Alerts Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, no operations-alert implementation yet.
 
 ## Problem
 
@@ -10,8 +10,22 @@ Operations needs to be notified of every new order. Today operations can view po
 
 - Mobile order creation writes order and pending transaction.
 - Moyasar webhook records payment result.
+- Moyasar webhook handling now has a webhook inbox and duplicate event/transaction guard, which is a prerequisite for avoiding duplicate operations alerts later.
 - Portal can list all orders.
 - No email/WhatsApp/Slack/Teams/ops push alert service exists.
+
+## Implementation Status - 2026-04-28
+
+Implemented:
+
+- Prerequisite webhook idempotency foundation for payment events.
+- First backend CSV order export endpoint, which can help operations review orders manually while alerting is not built.
+
+Still pending:
+
+- No automatic operations email/WhatsApp alert is implemented yet.
+- Recipient list, sender/provider, and trigger decision are still owner decisions.
+- Needs order-event/outbox foundation before reliable alert delivery.
 
 ## Goals
 
@@ -173,4 +187,3 @@ Internal:
 - Who are the recipients?
 - Should alerts trigger on order created or only payment succeeded?
 - What is the provider acceptance SLA before escalation?
-

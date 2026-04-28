@@ -1,6 +1,6 @@
 # 09 - Admin Order Export Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, phase 1 backend CSV partially implemented.
 
 ## Problem
 
@@ -11,7 +11,25 @@ Operations wants to export orders from the admin portal. The backend has an `all
 - `GET /api/v1/Order/all-orders-portal` returns paginated orders.
 - Filters are limited by current query parameters.
 - No admin frontend source was found locally, only backend portal APIs.
-- No export package is currently referenced.
+- A first backend CSV endpoint now exists: `GET /api/v1/Order/export-orders-csv`.
+- The endpoint requires `OrderControllerAccess`, returns UTF-8 CSV with BOM, and exports all orders.
+- The current first implementation does not yet apply filters, async jobs, audit logs, or role-based field masking.
+
+## Implementation Status - 2026-04-28
+
+Implemented:
+
+- Backend synchronous CSV export endpoint: `GET /api/v1/Order/export-orders-csv`.
+- Export columns include order, customer, provider, service/product, transaction, address, and vehicle details.
+- CSV uses UTF-8 BOM for Arabic/Excel compatibility.
+
+Still pending before this is production-complete:
+
+- Match portal listing filters.
+- Add export audit log: requester, filters, row count, download timestamp.
+- Add maximum date range or async export job for large exports.
+- Confirm whether plate number, address, and customer phone are allowed for every portal role.
+- Wire the admin portal frontend to call the new endpoint.
 
 ## Goals
 
@@ -110,7 +128,8 @@ Audit:
 
 Phase 1 synchronous:
 
-- `GET /api/v1/Order/export`
+- Current implemented endpoint: `GET /api/v1/Order/export-orders-csv`
+- Proposed stable endpoint after review: `GET /api/v1/Order/export`
 - Same query filters as listing.
 - `format=csv`
 - Requires `OrderControllerAccess` or more specific `OrderExportAccess`.
@@ -185,4 +204,3 @@ Expected portal controls:
 - Should plate numbers be included?
 - Which roles can export customer phone/address?
 - What maximum date range should synchronous export allow?
-

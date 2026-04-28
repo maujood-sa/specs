@@ -139,4 +139,3 @@ Specs:
 - Backend dependency warning: AutoMapper `13.0.1`.
 - App KMP warnings: redundant source-set edges, expect/actual beta warnings, Compose/Kotlin warnings.
 - iOS framework link warning for `nsexception-kt-core` cinterop export.
-
