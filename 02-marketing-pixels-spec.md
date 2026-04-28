@@ -1,6 +1,6 @@
 # 02 - Marketing Pixels Spec
 
-Status: draft for review, no implementation included.
+Status: draft for review, no marketing-pixel implementation included.
 
 ## Problem
 
@@ -18,7 +18,8 @@ Maujood wants marketing pixels and conversion tracking. The current system has P
 ## Goals
 
 - Track the booking funnel from discovery to paid order.
-- Support Google Analytics/Google Ads and Meta Pixel/Conversions API.
+- Support Meta, Snapchat, and TikTok pixels/conversion APIs as the reviewed first marketing scope.
+- Keep GA4/Google Ads available as optional later destinations if business wants them.
 - Avoid duplicate purchase counting across app, web, backend, and Salla.
 - Make backend payment success the source of truth for purchase conversion.
 
@@ -56,11 +57,13 @@ Core funnel:
 
 Recommended marketing mappings:
 
+- Meta `ViewContent`, `InitiateCheckout`, `Purchase`, and later `Subscribe` or custom events for packages.
+- Snapchat `VIEW_CONTENT`, `START_CHECKOUT`, `PURCHASE`, and package/promo custom events.
+- TikTok `ViewContent`, `InitiateCheckout`, `PlaceAnOrder` or `CompletePayment`, and package/promo custom events.
 - GA4 `view_item_list` for service/provider lists.
 - GA4 `view_item` for product/provider detail.
 - GA4 `begin_checkout` when user reaches payment method selection.
 - GA4 `purchase` only after backend payment success.
-- Meta `ViewContent`, `InitiateCheckout`, `Purchase`, and later `Subscribe` or custom events for packages.
 
 ## Data Model Requirements
 
@@ -86,7 +89,7 @@ Add backend-side tracking support:
 
 - `MarketingDispatch`
   - `MarketingEventId`
-  - `Destination`: `ga4`, `google_ads`, `meta_capi`, `posthog`, `amplitude`
+  - `Destination`: `meta_capi`, `snap_capi`, `tiktok_events_api`, `ga4`, `google_ads`, `posthog`, `amplitude`
   - `ExternalEventId`
   - `Status`
   - `AttemptCount`
@@ -99,6 +102,7 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 
 - Use backend `Order.Id` as `transaction_id` for GA4 purchase.
 - Use a stable `event_id` for Meta Pixel + Conversions API deduplication, e.g. `purchase:{orderId}:{paymentId}`.
+- Use equivalent stable event IDs for Snapchat CAPI and TikTok Events API.
 - For web/Salla frontend pixels, emit non-final checkout events client-side.
 - Emit purchase from backend only after Moyasar confirms payment success.
 - If frontend must also emit purchase, it must use the same event ID and transaction ID.
@@ -113,7 +117,8 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 
 ## Website/Salla Requirements
 
-- Install Google tag/GA4 and Meta Pixel on Salla if Salla permits custom scripts/pixels.
+- Install Meta Pixel, Snap Pixel, and TikTok Pixel on Salla if Salla permits custom scripts/pixels.
+- GA4/Google Ads tags can be added later if approved.
 - Fire web events for service views and checkout starts.
 - Send paid purchase conversion from backend after Salla order maps to Maujood order.
 - Preserve UTM and click IDs from website into backend order metadata:
@@ -132,7 +137,8 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 - Log event once from ViewModel/business milestone, not from every composable render.
 - Include platform and app version.
 - Keep PostHog as product analytics if desired.
-- Add Meta App Events or server-side Conversions API for app conversions only after consent decision.
+- Add Meta App Events, Snap App Pixel/MMP integration, or TikTok App Events only after consent and SDK decision.
+- Prefer backend/server-side purchase conversions for paid order truth.
 
 ## Backend Requirements
 
@@ -149,8 +155,9 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 ## Acceptance Criteria
 
 - A paid order creates one and only one purchase conversion in backend dispatch.
-- GA4 DebugView shows expected checkout/purchase events in staging.
 - Meta Events Manager receives browser and/or server events with dedupe IDs.
+- Snapchat Events Manager receives staging test events with dedupe IDs.
+- TikTok Events Manager receives staging test events with dedupe IDs.
 - Marketing events never contain raw OTPs, raw Firebase tokens, full phone numbers, or vehicle plate numbers.
 - A source/channel field can distinguish mobile app, Salla, and admin-created orders.
 
@@ -163,7 +170,7 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 
 ## Owner Decisions
 
-- Which platforms are required at launch: GA4, Google Ads, Meta, TikTok/Snapchat later?
+- Which platforms are required at launch: recommended first scope is Meta, Snapchat, and TikTok.
 - Are we allowed to use customer phone/email for advanced matching if hashed?
 - Should server-side purchase events be the only source of truth? Recommended: yes.
 
@@ -172,4 +179,5 @@ Use an outbox pattern so payment webhooks can commit order/payment state before 
 - GA4 ecommerce events: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce
 - Meta Pixel: https://developers.facebook.com/docs/meta-pixel/get-started
 - Meta Conversions API: https://developers.facebook.com/docs/marketing-api/conversions-api
-
+- Snapchat Conversions API: https://businesshelp.snapchat.com/s/article/conversions-api
+- TikTok Events API: https://business-api.tiktok.com/portal/docs?id=1771101303285761

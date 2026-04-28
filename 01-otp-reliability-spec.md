@@ -17,6 +17,7 @@ Because Firebase Phone Auth is client-side, the backend cannot currently see the
 - Backend verifies the Firebase token with Firebase Admin SDK and creates or returns a Maujood user.
 - iOS App Store build works today. Source-built iOS now has a Firebase phone-auth compatibility shim using `FIRPhoneAuthProvider`.
 - Backend `/User/authenticate` now logs Firebase token verification success/failure with masked phone number and Firebase UID.
+- App now emits OTP analytics events for send, resend, verify, invalid-phone, success, and failure paths using hashed phone metadata only.
 
 Relevant current code:
 
@@ -32,11 +33,12 @@ Implemented:
 
 - iOS source phone-auth shim now sends verification through Firebase iOS SDK and exchanges OTP for a Firebase ID token.
 - Backend auth path now logs Firebase verification failures and successful user creation/login using masked phone values.
+- Client OTP analytics now tracks `otp_send_requested`, `otp_send_succeeded`, `otp_send_failed`, `otp_resend_requested`, `otp_resend_succeeded`, `otp_resend_failed`, `otp_verify_requested`, `otp_verify_succeeded`, `otp_verify_failed`, and `otp_phone_invalid`.
 - Android debug build, iOS shared compile, and iOS framework link were verified after the iOS auth shim change.
 
 Still pending:
 
-- Client analytics events for OTP send/code-sent/resend/verify outcomes.
+- Firebase callback-level analytics for code-sent vs auto-verification internals.
 - A backend support report for recent auth attempts.
 - Firebase Console verification: Saudi region policy, billing/quota, Android SHA-1/SHA-256, APNs, API key restrictions, and Play Integrity.
 - User-facing error copy by Firebase exception type.
@@ -72,23 +74,29 @@ Verify these before changing code:
 
 ## Instrumentation Requirements
 
-Add client analytics events:
+Add/maintain client analytics events:
 
-- `otp_send_started`
+- `otp_send_requested`
+- `otp_send_succeeded`
+- `otp_send_failed`
+- `otp_resend_requested`
+- `otp_resend_succeeded`
+- `otp_resend_failed`
+- `otp_verify_requested`
+- `otp_verify_succeeded`
+- `otp_verify_failed`
+- `otp_phone_invalid`
+
+Future lower-level Firebase callback events:
+
 - `otp_code_sent`
 - `otp_auto_verified`
-- `otp_send_failed`
-- `otp_resend_started`
-- `otp_resend_failed`
-- `otp_verify_started`
-- `otp_verify_failed`
-- `otp_login_success`
 
 Event fields:
 
 - platform: `android` or `ios`
 - app version and build flavor
-- masked phone country and last two digits only
+- phone country, phone hash, and phone length only
 - firebase project id, if safe to expose internally
 - Firebase exception class and error code
 - verification duration in milliseconds

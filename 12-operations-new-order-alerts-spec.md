@@ -1,6 +1,6 @@
 # 12 - Operations New Order Alerts Spec
 
-Status: draft for review, no operations-alert implementation yet.
+Status: draft for review, backend configuration foundation partially implemented.
 
 ## Problem
 
@@ -12,7 +12,8 @@ Operations needs to be notified of every new order. Today operations can view po
 - Moyasar webhook records payment result.
 - Moyasar webhook handling now has a webhook inbox and duplicate event/transaction guard, which is a prerequisite for avoiding duplicate operations alerts later.
 - Portal can list all orders.
-- No email/WhatsApp/Slack/Teams/ops push alert service exists.
+- Backend now has `OperationsAlertRule` and `OperationsAlertLog` foundation tables plus admin APIs to configure rules/recipients.
+- No email/WhatsApp/Slack/Teams/ops push alert dispatcher exists yet.
 
 ## Implementation Status - 2026-04-28
 
@@ -20,12 +21,13 @@ Implemented:
 
 - Prerequisite webhook idempotency foundation for payment events.
 - First backend CSV order export endpoint, which can help operations review orders manually while alerting is not built.
+- Added backend operations alert rule/log models, EF migration, and admin configuration endpoints.
 
 Still pending:
 
 - No automatic operations email/WhatsApp alert is implemented yet.
-- Recipient list, sender/provider, and trigger decision are still owner decisions.
-- Needs order-event/outbox foundation before reliable alert delivery.
+- Email provider/sender setup and actual dispatch worker are still pending.
+- Needs order-event/outbox wiring before reliable alert delivery.
 
 ## Goals
 
@@ -76,35 +78,27 @@ Phase 3:
 
 ## Data Model Requirements
 
-Add `OperationsAlertRule`:
+Implemented foundation `OperationsAlertRule`:
 
 - `EventKey`
 - `Channel`
 - `Recipients`
 - `IsActive`
-- `ThresholdMinutes`
-- `Language`
+- `TriggerDelayMinutes`
+- `CooldownMinutes`
+- `TemplateKey`
 
-Add `OperationsAlert`:
+Implemented foundation `OperationsAlertLog`:
 
 - `Id`
+- `OperationsAlertRuleId`
 - `EventKey`
 - `OrderId`
 - `PayloadJson`
 - `Status`
 - `CreatedOn`
-- `AcknowledgedBy`
-- `AcknowledgedOn`
-
-Add `OperationsAlertDispatch`:
-
-- `OperationsAlertId`
 - `Channel`
 - `Recipient`
-- `Provider`
-- `ExternalMessageId`
-- `Status`
-- `AttemptCount`
 - `LastError`
 - `SentOn`
 
@@ -156,10 +150,14 @@ Rules must re-check current order state before sending.
 
 Portal/admin:
 
+- Implemented: `GET /api/v1/Configuration/operations-alert-rules`
+- Implemented: `POST /api/v1/Configuration/operations-alert-rules`
+- Implemented: `PUT /api/v1/Configuration/operations-alert-rules/{id}`
+
+Future:
+
 - `GET /api/v1/operations/alerts`
 - `PUT /api/v1/operations/alerts/{id}/acknowledge`
-- `GET /api/v1/operations/alert-rules`
-- `PUT /api/v1/operations/alert-rules/{id}`
 
 Internal:
 

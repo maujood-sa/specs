@@ -11,24 +11,27 @@ Operations wants to export orders from the admin portal. The backend has an `all
 - `GET /api/v1/Order/all-orders-portal` returns paginated orders.
 - Filters are limited by current query parameters.
 - No admin frontend source was found locally, only backend portal APIs.
-- A first backend CSV endpoint now exists: `GET /api/v1/Order/export-orders-csv`.
-- The endpoint requires `OrderControllerAccess`, returns UTF-8 CSV with BOM, and exports all orders.
-- The current first implementation does not yet apply filters, async jobs, audit logs, or role-based field masking.
+- A backend CSV endpoint now exists at both `GET /api/v1/Order/export-orders-csv` and `GET /api/v1/Order/export`.
+- The endpoint requires `OrderControllerAccess`, returns UTF-8 CSV with BOM, and supports query filters.
+- Synchronous export date range is configurable with `Exports:Orders:MaxDateRangeDays`.
+- The current implementation does not yet add audit logs, async jobs, or role-based field masking.
 
 ## Implementation Status - 2026-04-28
 
 Implemented:
 
 - Backend synchronous CSV export endpoint: `GET /api/v1/Order/export-orders-csv`.
+- Route alias: `GET /api/v1/Order/export`.
+- Query filters: created date range, service date range, order status, provider, product, user, and keyword search.
+- Configurable synchronous range limit through `Exports:Orders:MaxDateRangeDays`, defaulting to 31 days.
 - Export columns include order, customer, provider, service/product, transaction, address, and vehicle details.
 - CSV uses UTF-8 BOM for Arabic/Excel compatibility.
 
 Still pending before this is production-complete:
 
-- Match portal listing filters.
 - Add export audit log: requester, filters, row count, download timestamp.
-- Add maximum date range or async export job for large exports.
-- Confirm whether plate number, address, and customer phone are allowed for every portal role.
+- Add async export job for large exports.
+- Confirm whether plate number, address, and customer phone should remain visible for every portal role.
 - Wire the admin portal frontend to call the new endpoint.
 
 ## Goals
@@ -128,9 +131,8 @@ Audit:
 
 Phase 1 synchronous:
 
-- Current implemented endpoint: `GET /api/v1/Order/export-orders-csv`
-- Proposed stable endpoint after review: `GET /api/v1/Order/export`
-- Same query filters as listing.
+- Current endpoints: `GET /api/v1/Order/export-orders-csv` and `GET /api/v1/Order/export`
+- Query filters: `CreatedFrom`, `CreatedTo`, `ServiceDateFrom`, `ServiceDateTo`, `OrderStatusId`, `ProviderId`, `ProductId`, `UserId`, `SearchText`.
 - `format=csv`
 - Requires `OrderControllerAccess` or more specific `OrderExportAccess`.
 - Returns file stream.
@@ -201,6 +203,5 @@ Expected portal controls:
 ## Owner Decisions
 
 - CSV only for v1, or XLSX required immediately?
-- Should plate numbers be included?
-- Which roles can export customer phone/address?
-- What maximum date range should synchronous export allow?
+- Should plate/customer phone/address stay available to `admin,operation`, or should field masking be added?
+- Current synchronous export range is 31 days by config; confirm if this should change.

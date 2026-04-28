@@ -15,6 +15,7 @@ Customers need automatic notifications throughout the booking flow and during/af
 - `ChangeOrderStatus` sends generic status update notification.
 - Firebase push sends are now guarded so missing/invalid device tokens are logged instead of breaking order/webhook processing.
 - Moyasar webhook duplicate handling now reduces duplicate payment-side effects, but there is still no notification outbox or notification-level idempotency key.
+- Backend now has foundation tables and admin APIs for notification templates and notification dispatch audit records.
 - App notifications screen currently renders hardcoded sample offer items after a delay.
 
 ## Implementation Status - 2026-04-28
@@ -24,13 +25,15 @@ Implemented:
 - Backend Firebase notification sends now catch Firebase messaging errors and log failures.
 - Order status changes skip push notification when the user has no device token instead of throwing.
 - Payment webhook duplicate guards reduce duplicate payment transaction creation.
+- Added backend `NotificationTemplate` and `NotificationDispatch` models, EF migration, and admin configuration endpoints.
 
 Still pending:
 
-- Notification templates, notification history, dispatch log, retry queue, and token cleanup.
+- Wiring order events into the notification outbox/dispatcher.
+- Customer-facing notification history API and real app notifications screen data.
+- Retry queue and token cleanup.
 - Multi-device device-token table.
 - Localized customer notification content.
-- In-app notification API and app screen integration.
 
 ## Goals
 
